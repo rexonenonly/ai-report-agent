@@ -1,0 +1,139 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "id": "3bc855b5-03eb-4ad5-b86b-6d4d1ea5346f",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Nari semua baris dari input (CSV → JSON auto oleh n8n)\nreturn [\n  {\n    json: {\n      data: $input.all().map(item => item.json)\n    }\n  }\n];"
+      },
+      "id": "d0eee0f1-6a84-4bf4-a697-defc9082d8de",
+      "name": "Code in JavaScript",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://rdtab2q.abc-tunnel.us/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  model: \"kr/deepseek-3.2\",\n  messages: [\n    {\n      role: \"system\",\n      content: \"Kamu analyst AI agent. Terjemahkan data penjualan jadi laporan terstruktur dalam bahasa Indonesia.\"\n    },\n    {\n      role: \"user\",\n      content: \"Dari data rekap penjualan berikut: \" + JSON.stringify($json.data) + \"\\n\\nBuat:\\n1. Rekap per bulan (total penjualan & total unit)\\n2. 3 insight / temuan penting\\n3. 2 rekomendasi tindakan nyata untuk tim sales\\nOutput: markdown rapi, pakai tabel untuk rekap.\"\n    }\n  ],\n  temperature: 0.3\n}) }}",
+        "options": {}
+      },
+      "id": "a0cd497b-ce97-4fc8-bdab-debe20ed28e2",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        0
+      ],
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "HxunzFrt1CuGBxhL",
+          "name": "Custom Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "73b6a721-dc44-44ee-a850-42ba72d4709b",
+              "name": "report",
+              "value": "={{ $json.choices[0].message.content }}",
+              "type": "string"
+            },
+            {
+              "id": "1deba77d-67be-476d-8286-6a80f2d77ed7",
+              "name": "name",
+              "value": "={{ $json.model }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "2697ff12-3e27-4b8b-b82f-36fe41ab5df8",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        672,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "092c4c97-7403-4242-b44c-c02205b5e4e1",
+  "meta": {
+    "instanceId": "7b2766f6c42fd4e2be56d1ef3d65849f852a55bf3a097bfb22851e74282d1a28"
+  },
+  "nodeGroups": [],
+  "id": "aVZNM6dcnqyZmCc0",
+  "tags": []
+}
